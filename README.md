@@ -7,8 +7,8 @@ To enter a number, select a number from 0-8 that corresponds to a position on th
 The current board status will be returned as a number from 0-511, as a bitmask of current moves on the board.  LSB is the bottom right corner and MSB is top left corner.  Basically, the opposite numbering scheme of the move selection.
 
 #Improvements Coming:
-Improve AI
-Improve Ease of Use
+Improve AI, 
+Improve Ease of Use, 
 Refactor code
 
 Note: I will not be adding a GUI.  This is just a sample project for me to learn about game AI.
