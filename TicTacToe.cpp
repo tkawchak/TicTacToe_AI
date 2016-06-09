@@ -10,13 +10,14 @@ class Board {
         int Xstate, Ostate;
         int openSpots;
         string winner;
+        double outcomeWeight;
         double winsPossible;
         double movesPossible;
         vector<Board> possible;
         int movePos;
+        int turnCount;
 
     public:
-        int turnCount;
 
         // construct board
         Board(int Xstate=0, int Ostate=0, int turnCount=0) {
@@ -72,19 +73,36 @@ class Board {
         }
 
         void evaluateBoard() {
+
+        	// NEED TO FIND A WAY TO KEEP DEEP GAMES
+        	// FROM INFLUENCING THE DECISION AS MUCH AS IMMEDIATE GAMES
+        	// LIKE IF OPPONENT CAN WIN NEXT MOVE THAT HAS TO BE PRIORITY
+
             vector<Board>::iterator iter;
+
+            // leaf games that must be evaluated for a winner
             if (possible.begin() == possible.end()) {
                 status();
-                movesPossible = 1;
                 if (winner.compare("O") == 0) {
-                    winsPossible = 1;
+                    outcomeWeight = 1;
+                }
+                else if (winner.compare("X") == 0) {
+                	outcomeWeight = -1;
+                }
+                else {
+                	outcomeWeight = 0;
                 }
             }
+
+            // the children must be evaluated and the weights averaged
             else {
+            	double outcomeTotal = 0;
+            	int outcomes = 0;
                 for (iter = possible.begin(); iter != possible.end(); iter++) {
-                    movesPossible += iter->movesPossible;
-                    winsPossible += iter->winsPossible;
+                    outcomeTotal += iter->outcomeWeight;
+                    outcomes += 1;
                 }
+                outcomeWeight = outcomeTotal / outcomes;
             }
         }
 
@@ -109,10 +127,6 @@ class Board {
 
         void determineMove() {
             vector<Board>::iterator iter;
-            char temp;
-
-            //print();
-            //cin >> temp;
 
             if (!status()) {
 
@@ -141,13 +155,14 @@ class Board {
             // determine best chance of winning
             iter = possible.begin();
             int bestMove = iter->movePos;
-            double bestProb = iter->winsPossible / iter->movesPossible;
+            double bestProb = iter->outcomeWeight;
             for (iter = possible.begin(); iter != possible.end(); iter++) {
-                if (bestProb <= (iter->winsPossible / iter->movesPossible)) {
+                if (bestProb <= (iter->outcomeWeight)) {
                     bestMove = iter->movePos;
-                    bestProb = iter->winsPossible / iter->movesPossible;
+                    bestProb = iter->outcomeWeight;
                 }
             }
+            cout << "win probability: " << bestProb << endl;
 
             Omove(bestMove);
 
@@ -182,6 +197,10 @@ class Board {
         string getWinner() {
             return winner;
         }
+
+        int getTurnCount() {
+        	return turnCount;
+        }
 };
 
 int main()
@@ -191,12 +210,12 @@ int main()
 
    cout << "starting game" << endl;
 
-   while ((MyBoard->turnCount < 9) && (!(MyBoard->status()))) {
+   while ((MyBoard->getTurnCount() < 9) && (!(MyBoard->status()))) {
 
-       cout << "next turn: " << (MyBoard->turnCount % 2) << endl;
+       cout << "next turn: " << (MyBoard->getTurnCount() % 2) << endl;
        MyBoard->print();
 
-       if (((MyBoard->turnCount) % 2) == 0) {
+       if (((MyBoard->getTurnCount()) % 2) == 0) {
            // user moves
            MyBoard->getMove();
        }
