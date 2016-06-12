@@ -25,6 +25,8 @@ class Board {
             this->winner = "";
             this->turnCount = turnCount;
             this->outcomeWeight = 0;
+            this->movePos = 9;
+            this->openSpots = 511;
         }
 
         // print out the board state numbers
@@ -80,6 +82,7 @@ class Board {
             int newMove;
             newMove = (int)(0.5 + pow(2, 8 - input));
             Ostate = Ostate | newMove;
+            openSpots = getOpenSpots();
             movePos = input;
             turnCount++;
         }
@@ -88,6 +91,7 @@ class Board {
             int newMove;
             newMove = (int)(0.5 + pow(2, 8 - input));
             Xstate = Xstate | newMove;
+            openSpots = getOpenSpots();
             movePos = input;
             turnCount++;
         }
@@ -247,9 +251,10 @@ class Board {
         void computerMove() {
         	cout << "getting computer move." << endl;
             vector<Board>::iterator iter;
-            int movePos;
 
             movePos = determineMove();
+
+            cout << "computer move: " << movePos << endl;
 
             if ((turnCount % 2) == 0) {
             	Xmove(movePos);
@@ -257,6 +262,8 @@ class Board {
             else {
             	Omove(movePos);
             }
+
+            possible.clear();
         }
 
         // return true if game over, false if not over
@@ -299,13 +306,10 @@ class Board {
 int main()
 {
    cout << "constructing board..." << endl;
-   Board *MyBoard = new Board(282, 133, 7);
+   Board *MyBoard = new Board(0, 0, 0);
    cout << "starting game..." << endl;
 
-   MyBoard->print();
-   MyBoard->computerMove();
-
-   while ((MyBoard->getTurnCount() < 9) && (!(MyBoard->status()))) {
+   while ((!(MyBoard->status())) && (MyBoard->getTurnCount() < 9)) {
 	   cout << endl;
        MyBoard->print();
        cout << "next turn: " << (MyBoard->getTurnCount() % 2) << endl;
@@ -321,7 +325,6 @@ int main()
 
    cout << "ending game..." << endl;
    MyBoard->print();
-   MyBoard->status();
    cout << "winner: " << MyBoard->getWinner() << endl;
    return 0;
 }
