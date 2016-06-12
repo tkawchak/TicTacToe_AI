@@ -98,7 +98,6 @@ class Board {
 
         // build next level of move tree
         void buildMoveTree() {
-        	cout << "building move tree." << endl;
             int i;
             int possibleMove;
             Board *tempBoard;
@@ -137,7 +136,6 @@ class Board {
         // evaluate the leaf node of a game
         // set the outcomeWeight to a valid weight
         void evaluateLeaf() {
-        	cout << "evaluating leaf." << endl;
         	// leaf games that must be evaluated for a winner
 			status();
 			if (winner.compare("O") == 0) {
@@ -149,7 +147,6 @@ class Board {
 			else {
 				outcomeWeight = 0;
 			}
-			cout << "exiting evaluate leaf." << endl;
         }
 
         // evaluate next level of board and return the
@@ -162,19 +159,15 @@ class Board {
 
             iter = possible.begin();
 
-            cout << "evaluating board." << endl;
-
             // evaluate leaf node for win value
             if (status() && (iter == possible.end())) {
             	evaluateLeaf();
             	bestMove = movePos;
-            	cout << "returning from evaluateBoard leaf: " << bestMove << endl;
             	return bestMove;
             }
 
             // return 9 if the subtree has not been built yet
             else if ((iter == possible.end())) {
-            	cout << "returning from evaluateBoard: " << bestMove << endl;
             	return bestMove;
             }
 
@@ -209,9 +202,7 @@ class Board {
 							bestMove = iter->movePos;
 						}
 					}
-                	cout << "weight: " << iter->outcomeWeight << endl;
                 }
-            	cout << "returning from evaluateBoard: " << bestMove << endl;
                 return bestMove;
             }
         }
@@ -222,7 +213,6 @@ class Board {
         // builds more games if necessary
         // repeats this process on the children
         int determineMove() {
-        	cout << "determine move." << endl;
             vector<Board>::iterator iter;
             int bestMove = 9;
 
@@ -240,21 +230,15 @@ class Board {
 			}
 
 			bestMove = evaluateBoard();
-			cout << "returning from determine move: " << bestMove << endl;
             return bestMove;
         }
 
-        // perform a monte carlo tree search
+        // perform a minimax tree search
         // to determine next computer move
-        // INCLUDE a-B PRUNING TECHNIQUES HERE
-        // TO IMPROVE THE ALGORITHM
         void computerMove() {
-        	cout << "getting computer move." << endl;
             vector<Board>::iterator iter;
 
             movePos = determineMove();
-
-            cout << "computer move: " << movePos << endl;
 
             if ((turnCount % 2) == 0) {
             	Xmove(movePos);
