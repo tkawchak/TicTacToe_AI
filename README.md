@@ -5,5 +5,5 @@ This is a Tic Tac Toe program that will play against you with an AI.  This is wr
 Feel free to download this and to share it with others.  Additionally, share any bugs, suggestions, and comments with me.  Thanks!
 
 #Possible Improvements (not necessarily in order):
-* [Add a GUI to facilitate better usability
-* [Create option to have CPU start or user make first move
+* Add a GUI to facilitate better usability
+* Create option to have CPU start or user make first move
