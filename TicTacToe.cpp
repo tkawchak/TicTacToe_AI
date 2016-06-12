@@ -2,17 +2,16 @@
 #include <cmath>
 #include <vector>
 #include <string>
+#include <sstream>
 
 using namespace std;
 
 class Board {
     private:
-        int Xstate, Ostate;
-        int openSpots;
+        int Xstate, Ostate;  // 9-bit mask for current positions of each player
+        int openSpots;  // 9-bit mask for open spots on board
         string winner;
-        double outcomeWeight;
-        double winsPossible;
-        double movesPossible;
+        int outcomeWeight;
         vector<Board> possible;
         int movePos;
         int turnCount;
@@ -23,87 +22,55 @@ class Board {
         Board(int Xstate=0, int Ostate=0, int turnCount=0) {
             this->Xstate = Xstate;
             this->Ostate = Ostate;
-            winner = "";
+            this->winner = "";
             this->turnCount = turnCount;
+            this->outcomeWeight = 0;
         }
 
         // print out the board state numbers
         void print() {
-            cout << "X: " << Xstate << endl;
-            cout << "O: " << Ostate << endl;
+        	string position[9];
+        	ostringstream numString;
+        	int possibleMove;
+        	int i;
+
+        	for (i = 0; i < 9; i++) {
+        		numString.str("");
+        		numString.clear();
+				possibleMove = (int)(0.5 + pow(2, 8 - i));
+
+				if (possibleMove & Xstate) {
+					position[i] = "X";
+				}
+				else if (possibleMove & Ostate) {
+					position[i] = "O";
+				}
+				else {
+					numString << i;
+					position[i] = numString.str();
+				}
+
+			}
+
+        	cout << "   |   |   " << endl;
+        	cout << " " << position[0] << " | " << position[1] << " | " << position[2] << " " << endl;
+        	cout << "   |   |   " << endl;
+        	cout << "---+---+---" << endl;
+        	cout << "   |   |   " << endl;
+        	cout << " " << position[3] << " | " << position[4] << " | " << position[5] << " " << endl;
+        	cout << "   |   |   " << endl;
+        	cout << "---+---+---" << endl;
+        	cout << "   |   |   " << endl;
+        	cout << " " << position[6] << " | " << position[7] << " | " << position[8] << " " << endl;
+        	cout << "   |   |   " << endl;
         }
 
         // prompt user to make next move
         void getMove() {
             int input;
-
             cout << "Please enter a move for X: ";
             cin >> input;
-
             Xmove(input);
-        }
-
-        // take the current open spots and add x or o corresponding to depth
-        void buildMoveTree() {
-            int i;
-            int possibleMove;
-            Board *tempBoard;
-
-            // build all possible boards and evaluate them
-            openSpots = 511 - (Xstate | Ostate);
-
-            //cout << "open spots: " << openSpots << endl;
-
-            for (i = 0; i < 9; i++) {
-                possibleMove = (int)(0.5 + pow(2, 8 - i));
-                //cout << "i: " << i << "Possible move: " << possibleMove;
-                if ((possibleMove & openSpots) != 0) {
-                    //cout << " - possible move" << endl;
-                    tempBoard = new Board(Xstate, Ostate, turnCount);
-                    if ((turnCount % 2) == 0) {
-                        tempBoard->Xmove(i);
-                    }
-                    else {
-                        tempBoard->Omove(i);
-                    }
-                    possible.push_back(*tempBoard);
-                }
-                //cout << endl;
-            }
-        }
-
-        void evaluateBoard() {
-
-        	// NEED TO FIND A WAY TO KEEP DEEP GAMES
-        	// FROM INFLUENCING THE DECISION AS MUCH AS IMMEDIATE GAMES
-        	// LIKE IF OPPONENT CAN WIN NEXT MOVE THAT HAS TO BE PRIORITY
-
-            vector<Board>::iterator iter;
-
-            // leaf games that must be evaluated for a winner
-            if (possible.begin() == possible.end()) {
-                status();
-                if (winner.compare("O") == 0) {
-                    outcomeWeight = 1;
-                }
-                else if (winner.compare("X") == 0) {
-                	outcomeWeight = -1;
-                }
-                else {
-                	outcomeWeight = 0;
-                }
-            }
-
-            // the children must be evaluated and the weights averaged
-            else {
-            	double outcomeTotal = 0;
-            	int outcomes = 0;
-                for (iter = possible.begin(); iter != possible.end(); iter++) {
-                    outcomeTotal += iter->outcomeWeight;
-                    outcomes += 1;
-                }
-                outcomeWeight = outcomeTotal / outcomes;
-            }
         }
 
         // takes a number 0-8 on board
@@ -125,53 +92,175 @@ class Board {
             turnCount++;
         }
 
-        void determineMove() {
-            vector<Board>::iterator iter;
+        // build next level of move tree
+        void buildMoveTree() {
+        	cout << "building move tree." << endl;
+            int i;
+            int possibleMove;
+            Board *tempBoard;
 
-            if (!status()) {
+            // build all possible boards and evaluate them
+            openSpots = getOpenSpots();
 
-                buildMoveTree();
+            for (i = 0; i < 9; i++) {
 
-                for (iter = possible.begin(); iter != possible.end(); iter++) {
-                    //cout << "building move tree" << endl;
-                    iter->determineMove();
-                    //cout << "evaluating board" << endl;
-                    iter->evaluateBoard();
+                possibleMove = (int)(0.5 + pow(2, 8 - i));
+
+                if ((possibleMove & openSpots) != 0) {
+                    tempBoard = new Board(Xstate, Ostate, turnCount);
+                    if ((turnCount % 2) == 0) {
+                        tempBoard->Xmove(i);
+                    }
+                    else {
+                        tempBoard->Omove(i);
+                    }
+                    possible.push_back(*tempBoard);
                 }
             }
+        }
+
+        // ****************************************
+        // algorithm to implement
+        // build possible move tree for one row
+        // evaluate to see if anything in that row results in a win
+        // if so, then return that result as the choice
+        // if not, then
+        	// if we can build more trees then call function to build and evaluate possible row of subtree
+        	// else evaluate the trees and return the subtree that maximizes winning
+        // *******************************************************
+
+
+        // evaluate the leaf node of a game
+        // set the outcomeWeight to a valid weight
+        void evaluateLeaf() {
+        	cout << "evaluating leaf." << endl;
+        	// leaf games that must be evaluated for a winner
+			status();
+			if (winner.compare("O") == 0) {
+				outcomeWeight = 1;
+			}
+			else if (winner.compare("X") == 0) {
+				outcomeWeight = -1;
+			}
+			else {
+				outcomeWeight = 0;
+			}
+			cout << "exiting evaluate leaf." << endl;
+        }
+
+        // evaluate next level of board and return the
+        // index corresponding to next move choice
+        // return 9 if other moves must be built
+        // set the outcomeWeight of the current game
+        int evaluateBoard() {
+            vector<Board>::iterator iter;
+            int bestMove = 9;
+
+            iter = possible.begin();
+
+            cout << "evaluating board." << endl;
+
+            // evaluate leaf node for win value
+            if (status() && (iter == possible.end())) {
+            	evaluateLeaf();
+            	bestMove = movePos;
+            	cout << "returning from evaluateBoard leaf: " << bestMove << endl;
+            	return bestMove;
+            }
+
+            // return 9 if the subtree has not been built yet
+            else if ((iter == possible.end())) {
+            	cout << "returning from evaluateBoard: " << bestMove << endl;
+            	return bestMove;
+            }
+
+            // the children must be evaluated
+            // if the opponent can win in the child then we must assume it will.
+            else {
+
+            	// initialize the weights to worst case scenario
+            	if ((turnCount % 2) == 0) {
+            		outcomeWeight = 1;
+            	}
+            	else if ((turnCount % 2) == 1) {
+            		outcomeWeight = -1;
+            	}
+
+                for (iter = possible.begin(); iter != possible.end(); iter++) {
+
+                	// MAYBE CHANGE THIS TO CONSIDER ALL POSSIBLE MOVES THAT WOULD RESULT
+                	// IN A MAXIMIZED SCORE?? RIGHT NOW I JUST PICK THE LAST ONE
+
+					// X turn
+					if ((turnCount % 2) == 0) {
+						if (iter->outcomeWeight <= outcomeWeight) {
+							outcomeWeight = iter->outcomeWeight;
+							bestMove = iter->movePos;
+						}
+					}
+					// O turn
+					else if ((turnCount % 2) == 1) {
+						if (iter->outcomeWeight >= outcomeWeight) {
+							outcomeWeight = iter->outcomeWeight;
+							bestMove = iter->movePos;
+						}
+					}
+                	cout << "weight: " << iter->outcomeWeight << endl;
+                }
+            	cout << "returning from evaluateBoard: " << bestMove << endl;
+                return bestMove;
+            }
+        }
+
+
+        // determine the next move for the program to make
+        // evaluates the current game
+        // builds more games if necessary
+        // repeats this process on the children
+        int determineMove() {
+        	cout << "determine move." << endl;
+            vector<Board>::iterator iter;
+            int bestMove = 9;
+
+            bestMove = evaluateBoard();
+            if (bestMove == 9) {
+            	buildMoveTree();
+            }
+            else {
+            	return bestMove;
+            }
+
+            // recursively call determine move function to evaluate and build subtrees as necessary
+			for (iter = possible.begin(); iter != possible.end(); iter++) {
+				iter->determineMove();
+			}
+
+			bestMove = evaluateBoard();
+			cout << "returning from determine move: " << bestMove << endl;
+            return bestMove;
         }
 
         // perform a monte carlo tree search
         // to determine next computer move
+        // INCLUDE a-B PRUNING TECHNIQUES HERE
+        // TO IMPROVE THE ALGORITHM
         void computerMove() {
+        	cout << "getting computer move." << endl;
             vector<Board>::iterator iter;
+            int movePos;
 
-            //cout << "computing move choices" << endl;
+            movePos = determineMove();
 
-            determineMove();
-
-            //cout << "computing best move" << endl;
-
-            // determine best chance of winning
-            iter = possible.begin();
-            int bestMove = iter->movePos;
-            double bestProb = iter->outcomeWeight;
-            for (iter = possible.begin(); iter != possible.end(); iter++) {
-                if (bestProb <= (iter->outcomeWeight)) {
-                    bestMove = iter->movePos;
-                    bestProb = iter->outcomeWeight;
-                }
+            if ((turnCount % 2) == 0) {
+            	Xmove(movePos);
             }
-            cout << "win probability: " << bestProb << endl;
-
-            Omove(bestMove);
-
-            // for number of winning possibilities
+            else {
+            	Omove(movePos);
+            }
         }
 
-        // return true if game over
-        // check if one set won
-        // or if one side board full
+        // return true if game over, false if not over
+        // determine winner by setting value of winner
         bool status() {
             if (((Xstate & 448) == 448) || ((Xstate & 56) == 56) ||
                 ((Xstate & 7) == 7) || ((Xstate & 292) == 292) ||
@@ -201,20 +290,25 @@ class Board {
         int getTurnCount() {
         	return turnCount;
         }
+
+        int getOpenSpots() {
+        	return 511 - (Xstate | Ostate);
+        }
 };
 
 int main()
 {
-   cout << "constructing board" << endl;
-   Board *MyBoard = new Board(0, 0, 0);
+   cout << "constructing board..." << endl;
+   Board *MyBoard = new Board(282, 133, 7);
+   cout << "starting game..." << endl;
 
-   cout << "starting game" << endl;
+   MyBoard->print();
+   MyBoard->computerMove();
 
    while ((MyBoard->getTurnCount() < 9) && (!(MyBoard->status()))) {
-
-       cout << "next turn: " << (MyBoard->getTurnCount() % 2) << endl;
+	   cout << endl;
        MyBoard->print();
-
+       cout << "next turn: " << (MyBoard->getTurnCount() % 2) << endl;
        if (((MyBoard->getTurnCount()) % 2) == 0) {
            // user moves
            MyBoard->getMove();
@@ -225,11 +319,9 @@ int main()
        }
    }
 
-   cout << "ending game" << endl;
-
+   cout << "ending game..." << endl;
    MyBoard->print();
-
+   MyBoard->status();
    cout << "winner: " << MyBoard->getWinner() << endl;
-
    return 0;
 }
