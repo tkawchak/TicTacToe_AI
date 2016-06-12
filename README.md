@@ -1,14 +1,9 @@
 #TicTacToe Program
 
-This is a Tic Tac Toe program that will play against you with an AI.  This is written in C++ with no dependencies besides the standard libraries and uses decision trees to determine subsequent moves.
+This is a Tic Tac Toe program that will play against you with an AI.  This is written in C++ with no dependencies besides the standard libraries and uses minimas decision trees combined with some modified pruning to determine subsequent moves.
 
-Currently the AI needs some work but you will be able to play a game.
-To enter a number, select a number from 0-8 that corresponds to a position on the board.  Numbering starts at the top-left side and works across rows and then down.
-The current board status will be returned as a number from 0-511, as a bitmask of current moves on the board.  LSB is the bottom right corner and MSB is top left corner.  Basically, the opposite numbering scheme of the move selection.
+Feel free to download this and to share it with others.  Additionally, share any bugs, suggestions, and comments with me.  Thanks!
 
-#Improvements Coming:
-Improve AI, 
-Improve Ease of Use, 
-Refactor code
-
-Note: I will not be adding a GUI.  This is just a sample project for me to learn about game AI.
+#Possible Improvements (not necessarily in order):
+* [Add a GUI to facilitate better usability
+* [Create option to have CPU start or user make first move
